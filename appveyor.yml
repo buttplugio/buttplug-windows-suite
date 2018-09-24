@@ -112,9 +112,6 @@ after_test:
         iscc buttplug-installer.iss
         installer\buttplug-installer.exe /VERYSILENT
         Push-AppveyorArtifact installer\buttplug-installer.exe -FileName Buttplug-$env:CONFIGURATION-$env:APPVEYOR_BUILD_VERSION-installer.exe
-        Push-Location ./docs
-        ./build.ps1
-        Pop-Location
       }
 
 # Enable for RDP connections to failing build VMs
