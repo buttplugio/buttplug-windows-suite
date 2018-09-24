@@ -80,7 +80,7 @@ before_build:
   - nuget restore
 
 build:
-  project: Buttplug.sln
+  project: ButtplugWindowsSuite.sln
   # publish_nuget: true
   parallel: true
   verbosity: minimal
@@ -88,7 +88,7 @@ build:
 after_build:
   - ps: |
       if ($isWindows) {
-        InspectCode.exe --output=resharper-clt-output.xml --project="Buttplug*" Buttplug.sln;
+        InspectCode.exe --output=resharper-clt-output.xml --project="Buttplug*" ButtplugWindowsSuite.sln;
         $result = [xml](Get-Content .\resharper-clt-output.xml)
         $result.Report.Issues.ChildNodes | ForEach-Object {$project = $_.Name; $_.ChildNodes | ForEach-Object {Add-AppveyorCompilationMessage -Message $_.Message -Line $_.Line -FileName $_.File -ProjectName $project}}
       }
