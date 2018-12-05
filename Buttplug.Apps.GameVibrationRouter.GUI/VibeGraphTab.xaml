@@ -18,6 +18,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
                 <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
             <GroupBox Header="Vibration Multiplier" Grid.Row="0">
@@ -30,7 +31,17 @@
                     <TextBlock Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" Text="{Binding ElementName=multiplierSlider, Path=Value, StringFormat='x\{0:0.0\}'}" Height="16" Margin="15.333,0,14,0.333" Width="auto"></TextBlock>
                 </Grid>
             </GroupBox>
-            <CheckBox Name="PassthruCheckBox"  Grid.Row="1" Content="Pass Gamepad Rumble To Gamepad" IsChecked="True" HorizontalAlignment="Left" Margin="0,5,0,5" VerticalAlignment="Stretch" Checked="PassthruCheckBox_Changed" Unchecked="PassthruCheckBox_Changed" />
+            <GroupBox Header="Baseline vibration" Grid.Row="1">
+                <Grid Row="0" RenderTransformOrigin="0.841,0.517">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                        <ColumnDefinition Width="auto"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Slider x:Name="baselineSlider" Foreground="Black" Grid.Column="0" VerticalAlignment="Stretch" HorizontalContentAlignment="Stretch" TickPlacement="BottomRight" ValueChanged="baselineSlider_ValueChanged" Value="0" Maximum="1" TickFrequency="0.02" IsSnapToTickEnabled="True" Margin="0,2,0,1.667"/>
+                    <TextBlock Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" Text="{Binding ElementName=baselineSlider, Path=Value, StringFormat='P0'}" Height="16" Margin="15.333,0,14,0.333" Width="auto"></TextBlock>
+                </Grid>
+            </GroupBox>
+            <CheckBox Name="PassthruCheckBox"  Grid.Row="2" Content="Pass Gamepad Rumble To Gamepad" IsChecked="True" HorizontalAlignment="Left" Margin="0,5,0,5" VerticalAlignment="Stretch" Checked="PassthruCheckBox_Changed" Unchecked="PassthruCheckBox_Changed" />
         </Grid>
         <wpf:CartesianChart Name="LowPowerChart" Grid.Row="1" Series="{Binding LowPowerSeriesCollection}" Background="Black" DisableAnimations="True"  Hoverable="False" DataTooltip="{x:Null}">
             <wpf:CartesianChart.AxisY>

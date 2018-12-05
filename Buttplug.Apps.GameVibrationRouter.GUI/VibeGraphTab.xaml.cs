@@ -24,6 +24,7 @@ namespace Buttplug.Apps.GameVibrationRouter.GUI
         private readonly ChartValues<double> LowPowerValues;
         private readonly ChartValues<double> HighPowerValues;
         public event EventHandler<double> MultiplierChanged;
+        public event EventHandler<double> BaselineChanged;
         public event EventHandler<bool> PassthruChanged;
 
         public VibeGraphTab()
@@ -94,6 +95,11 @@ namespace Buttplug.Apps.GameVibrationRouter.GUI
         private void multiplierSlider_ValueChanged(object aSender, System.Windows.RoutedPropertyChangedEventArgs<double> aArgs)
         {
             MultiplierChanged?.Invoke(this, aArgs.NewValue);
+        }
+
+        private void baselineSlider_ValueChanged(object aSender, System.Windows.RoutedPropertyChangedEventArgs<double> aArgs)
+        {
+            BaselineChanged?.Invoke(this, aArgs.NewValue);
         }
     }
 }
