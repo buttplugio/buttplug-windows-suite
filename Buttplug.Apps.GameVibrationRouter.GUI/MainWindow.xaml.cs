@@ -42,6 +42,8 @@ namespace Buttplug.Apps.GameVibrationRouter.GUI
         private Timer runTimer;
         private Timer commandTimer;
         private double _vibrationMultiplier = 1;
+        private double _vibrationBaseline = 0;
+        private bool _speedNeedsRecalc = false;
 
         public MainWindow()
         {
@@ -70,6 +72,7 @@ namespace Buttplug.Apps.GameVibrationRouter.GUI
             ButtplugTab.SelectedDevicesChanged += OnSelectedDevicesChanged;
 
             _graphTab.MultiplierChanged += MultiplierChanged;
+            _graphTab.BaselineChanged += BaselineChanged;
             _graphTab.PassthruChanged += PassthruChanged;
 
             var config = new ButtplugConfig("Buttplug");
@@ -87,6 +90,12 @@ namespace Buttplug.Apps.GameVibrationRouter.GUI
         private void MultiplierChanged(object sender, double vibeMultiplier)
         {
             _vibrationMultiplier = vibeMultiplier;
+            _speedNeedsRecalc = true;
+        }
+        private void BaselineChanged(object sender, double vibeBaseline)
+        {
+            _vibrationBaseline = vibeBaseline;
+            _speedNeedsRecalc = true;
         }
 
         private void PassthruChanged(object sender, bool shouldPassthru)
@@ -140,31 +149,52 @@ namespace Buttplug.Apps.GameVibrationRouter.GUI
 
         private async void OnVibrationTimer(object aObj, ElapsedEventArgs e)
         {
-            if (_lastVibration == _lastSentVibration)
+            if (_lastVibration == _lastSentVibration && !_speedNeedsRecalc)
             {
                 return;
             }
-            _lastSentVibration = _lastVibration;
+
             await Dispatcher.Invoke(async () =>
             {
                 foreach (var device in _devices)
                 {
-                    // For now, we only handle devices that can take vibration messages.
-                    if (!device.SupportsMessage(typeof(SingleMotorVibrateCmd)))
+                    if (device.SupportsMessage(typeof(VibrateCmd)))
                     {
-                        continue;
+                        if (device.Messages.TryGetValue("VibrateCmd", out var attrs))
+                        {
+                            try
+                            {
+                                uint vibeCount = attrs.FeatureCount ?? 0;
+                                List<VibrateCmd.VibrateSubcommand> vibratorSettings = new List<VibrateCmd.VibrateSubcommand>();
+
+                                double averageVibeSpeed = (_lastVibration.LeftMotorSpeed + _lastVibration.RightMotorSpeed) / (2.0 * 65535.0);
+
+                                // Calculate the vibe speed by first adding the multiplier to the averaged speed 
+                                // Then check if it's above the baseline, if not default to the baseline
+                                // If it is then make sure we don't go above 1.0 speed or things start breaking
+                                double vibeSpeed = Math.Min(Math.Max(averageVibeSpeed * _vibrationMultiplier, _vibrationBaseline), 1.0);
+
+                                for (uint i = 0; i < vibeCount; i++)
+                                {
+                                    vibratorSettings.Add(new VibrateCmd.VibrateSubcommand(i, vibeSpeed));
+                                }
+
+                                await _bpServer.SendMessage(new VibrateCmd(device.Index, vibratorSettings));
+                            }
+                            catch (Exception ex)
+                            {
+                                _log.Error(ex);
+                            }
+                        }
                     }
-                    double vibeSpeed = (_lastVibration.LeftMotorSpeed + _lastVibration.RightMotorSpeed) / (2.0 * 65535.0);
-                    await _bpServer.SendMessage(new SingleMotorVibrateCmd(device.Index,
-                        Math.Min(vibeSpeed * _vibrationMultiplier, 1.0)));
                 }
             });
+            _speedNeedsRecalc = false;
+            _lastSentVibration = _lastVibration;
         }
 
         private void OnVibrationCommand(object aObj, Vibration aVibration)
         {
-            aVibration.LeftMotorSpeed = Convert.ToUInt16(aVibration.LeftMotorSpeed * _vibrationMultiplier > 65535 ? 65535 : aVibration.LeftMotorSpeed * _vibrationMultiplier);
-            aVibration.RightMotorSpeed = Convert.ToUInt16(aVibration.RightMotorSpeed * _vibrationMultiplier > 65535 ? 65535 : aVibration.RightMotorSpeed * _vibrationMultiplier);
             _lastVibration = aVibration;
         }
 
